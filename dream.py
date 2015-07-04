@@ -94,7 +94,7 @@ def make_step(net, step_size=1.5, end='inception_4c/output', jitter=32, clip=Tru
 
 
 
-def deepdream(net, base_img, iter_n=10, octave_n=4, octave_scale=1.4, end='inception_4c/output', clip=True, **step_params):
+def deepdream(net, base_img, iter_n=10, octave_n=4, octave_scale=1.4, end='inception_4c/output', clip=True, show=True, **step_params):
 	# prepare base images for all octaves
 	octaves = [preprocess(net, base_img)]
 	for i in xrange(octave_n-1):
@@ -115,12 +115,13 @@ def deepdream(net, base_img, iter_n=10, octave_n=4, octave_scale=1.4, end='incep
 			make_step(net, end=end, clip=clip, **step_params)
 			
 			# visualization
-			vis = deprocess(net, src.data[0])
-			if not clip: # adjust image contrast if clipping is disabled
-				vis = vis*(255.0/np.percentile(vis, 99.98))
-			showarray(vis)
-			print octave, i, end, vis.shape
-			clear_output(wait=True)
+			if show:
+				vis = deprocess(net, src.data[0])
+				if not clip: # adjust image contrast if clipping is disabled
+					vis = vis*(255.0/np.percentile(vis, 99.98))
+				showarray(vis)
+				print 'Octave %i/%i' % (octave+1, octave_n), 'Iteration %i/%i' % (i+1, iter_n), 'Layer: %s' % (end), vis.shape
+				clear_output(wait=True)
 			
 		# extract details produced on the current octave
 		detail = src.data[0]-octave_base
