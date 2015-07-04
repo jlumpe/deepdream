@@ -8,7 +8,7 @@ import scipy.ndimage as nd
 import PIL.Image
 from IPython.display import clear_output, Image, display
 from google.protobuf import text_format
-
+import os
 import caffe
 
 
@@ -32,20 +32,33 @@ def save_image(a, path, fmt='jpeg'):
 	PIL.Image.fromarray(np.uint8(a)).save(path, fmt)
 
 
-model_path = '../caffe/models/bvlc_googlenet/' # substitute your path here
-net_fn   = model_path + 'deploy.prototxt'
-param_fn = model_path + 'bvlc_googlenet.caffemodel'
 
-# Patching model to be able to compute gradients.
-# Note that you can also manually add "force_backward: true" line to "deploy.prototxt".
-model = caffe.io.caffe_pb2.NetParameter()
-text_format.Merge(open(net_fn).read(), model)
-model.force_backward = True
-open('tmp.prototxt', 'w').write(str(model))
+# Loads a net from a caffe model file
+# I don't really know how these work
+def load_net(paramfile, structfile = None):
 
-net = caffe.Classifier('tmp.prototxt', param_fn,
-					   mean = np.float32([104.0, 116.0, 122.0]), # ImageNet mean, training set dependent
-					   channel_swap = (2,1,0)) # the reference model has channels in BGR order instead of RGB
+	# Default value for structfile
+	if structfile is None:
+		structfile = os.path.dirname(os.path.realpath(paramfile)) + '/deploy.prototxt'
+
+	# The rest is google's stuff
+
+	# Patching model to be able to compute gradients.
+	# Note that you can also manually add "force_backward: true" line to "deploy.prototxt".
+	model = caffe.io.caffe_pb2.NetParameter()
+	text_format.Merge(open(structfile).read(), model)
+	model.force_backward = True
+	open('tmp.prototxt', 'w').write(str(model))
+
+	net = caffe.Classifier('tmp.prototxt', paramfile,
+						   mean = np.float32([104.0, 116.0, 122.0]), # ImageNet mean, training set dependent
+						   channel_swap = (2,1,0)) # the reference model has channels in BGR order instead of RGB
+
+	return net
+
+
+
+
 
 # a couple of utility functions for converting to and from Caffe's input image layout
 def preprocess(net, img):
