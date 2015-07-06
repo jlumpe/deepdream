@@ -1,8 +1,10 @@
-# imports and basic notebook setup
+# imports
 from cStringIO import StringIO
 import numpy as np
 import PIL.Image
 from IPython.display import clear_output, Image, display
+import scipy.ndimage as nd
+import scipy.misc as misc
 
 
 
@@ -22,3 +24,17 @@ def load(path):
 # Save image from array
 def save(a, path, fmt='jpeg'):
 	PIL.Image.fromarray(np.uint8(a)).save(path, fmt)
+
+
+# Resizes an image to a given resolution
+def resize(img, interp='bicubic', **args):
+	if 'scale' in args:
+		return misc.imresize(img, float(args['scale']), interp)
+	else:
+		ratio = float(img.shape[1]) / img.shape[0]
+		if 'width' in args:
+			return misc.imresize(img, (int(args['width'] / ratio), int(args['width']), 3), interp)
+		elif 'height' in args:
+			return misc.imresize(img, (int(args['height']), int(args['height'] * ratio), 3), interp)
+		else:
+			raise ValueError('One of "scale", "width", "height" must be given')
