@@ -38,3 +38,38 @@ def resize(img, interp='bicubic', **args):
 			return misc.imresize(img, (int(args['height']), int(args['height'] * ratio), 3), interp)
 		else:
 			raise ValueError('One of "scale", "width", "height" must be given')
+
+
+# Creates image of random noise
+def noise(width, height=None):
+	if height is None:
+		height = width
+	return np.random.rand(height, width, 3) * 255
+
+
+# Creates some perlin noise
+def perlin(octaves=8, roughness=1, zoom=1):
+
+	# How much to scale displacement by each octave
+	base = 2.0 / roughness
+
+	# Init with random 2x2 image
+	size = 2
+	scale = 1.0
+	img = np.random.rand(2, 2, 3)
+
+	# more octaves
+	for i in range(1, octaves):
+		scale = scale / base
+		size = size * 2
+		img = nd.zoom(img, (2, 2, 1), order=1)
+		img = img + np.random.rand(size, size, 3) * scale
+
+	# Rescale image to 0-255 range
+	img = (img - img.min()) * (255 / (img.max() - img.min()))
+
+	# Perform final zoom if needed
+	if zoom > 1:
+		return nd.zoom(img, (zoom, zoom, 1), order=2)
+	else:
+		return img
